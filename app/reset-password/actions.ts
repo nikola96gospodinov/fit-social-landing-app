@@ -19,40 +19,51 @@ const resetPasswordSchema = z.object({
     }),
 });
 
-type ResetPasswordResponse = {
-  inputError: Record<string, string | string[]> | false;
-  supabaseError: string | false;
-  success: string | false;
+type ReturnType = {
+  inputError: string;
+  supabaseError: string;
+  success: string;
 };
 
 export async function resetPassword(
+  _state: ReturnType,
   formData: FormData
-): Promise<ResetPasswordResponse> {
-  const supabase = createClient();
+): Promise<ReturnType> {
+  try {
+    const supabase = createClient();
 
-  const data = {
-    password: formData.get("password"),
-  };
+    const data = {
+      password: formData.get("password"),
+    };
 
-  const parsedData = resetPasswordSchema.safeParse(data);
+    const parsedData = resetPasswordSchema.safeParse(data);
 
-  if (!parsedData.success) {
+    if (!parsedData.success) {
+      return {
+        inputError:
+          parsedData.error.flatten().fieldErrors.password?.[0] ??
+          "Check your password",
+        supabaseError: "",
+        success: "",
+      };
+    }
+
+    const { error } = await supabase.auth.updateUser(parsedData);
+
+    if (error) {
+      return { supabaseError: error.message, inputError: "", success: "" };
+    }
+
     return {
-      inputError: parsedData.error.flatten().fieldErrors,
-      supabaseError: false,
-      success: false,
+      success: "Password updated successfully",
+      inputError: "",
+      supabaseError: "",
+    };
+  } catch {
+    return {
+      inputError: "",
+      supabaseError: "Something went wrong",
+      success: "",
     };
   }
-
-  const { error } = await supabase.auth.updateUser(parsedData);
-
-  if (error) {
-    return { supabaseError: error.message, inputError: false, success: false };
-  }
-
-  return {
-    success: "Password updated successfully",
-    inputError: false,
-    supabaseError: false,
-  };
 }
