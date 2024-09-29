@@ -1,6 +1,6 @@
 "use server";
 
-import { createClient } from "@/lib/supabase";
+import { createClient } from "@/lib/supabase/server";
 import { z } from "zod";
 
 const resetPasswordSchema = z.object({
@@ -51,7 +51,11 @@ export async function resetPassword(
     const { error } = await supabase.auth.updateUser(parsedData);
 
     if (error) {
-      return { supabaseError: error.message, inputError: "", success: "" };
+      return {
+        supabaseError: error.message,
+        inputError: "",
+        success: "",
+      };
     }
 
     return {

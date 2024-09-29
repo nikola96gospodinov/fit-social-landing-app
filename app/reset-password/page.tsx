@@ -2,6 +2,9 @@
 
 import { useFormState } from "react-dom";
 import { resetPassword } from "./actions";
+import { createClient } from "@/lib/supabase/client";
+import { useSearchParams } from "next/navigation";
+import { useEffect } from "react";
 
 const inputClasses =
   "w-full px-4 py-2 rounded-full bg-slate-800 text-slate-50 border-2 border-slate-700 focus:border-indigo-500 focus:outline-none";
@@ -9,6 +12,25 @@ const inputErrorClasses =
   "w-full px-4 py-2 rounded-full bg-red-950 border-red-400 border-2 focus:outline-none";
 
 export default function ResetPassword() {
+  const searchParams = useSearchParams();
+  const supabase = createClient();
+
+  useEffect(() => {
+    const init = async () => {
+      const params = new URLSearchParams(searchParams.get("confirmation_url")!);
+      const token = params.get("token");
+      const email = params.get("email");
+
+      await supabase.auth.verifyOtp({
+        token: token!,
+        email: email!,
+        type: "recovery",
+      });
+    };
+
+    init();
+  }, []);
+
   const [state, formAction] = useFormState(resetPassword, {
     inputError: "",
     supabaseError: "",
@@ -38,11 +60,17 @@ export default function ResetPassword() {
         >
           Reset Password
         </button>
+
         {state.supabaseError && (
-          <p className="text-red-100 text-sm mt-2">{state.supabaseError}</p>
+          <div className="py-3 px-4 bg-red-950 rounded-lg mt-6 border border-red-100">
+            <p className="text-red-100 text-sm">{state.supabaseError}</p>
+          </div>
         )}
+
         {state.success && (
-          <p className="text-green-100 text-sm mt-2">{state.success}</p>
+          <div className="py-3 px-4 bg-green-950 rounded-lg mt-6 border border-green-100">
+            <p className="text-green-100 text-sm">{state.success}</p>
+          </div>
         )}
       </form>
     </div>
