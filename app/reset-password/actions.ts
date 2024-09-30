@@ -30,8 +30,6 @@ export async function resetPassword(
   formData: FormData
 ): Promise<ReturnType> {
   try {
-    const supabase = createClient();
-
     const data = {
       password: formData.get("password"),
     };
@@ -48,7 +46,11 @@ export async function resetPassword(
       };
     }
 
-    const { error } = await supabase.auth.updateUser(parsedData);
+    const supabase = createClient();
+
+    const { error } = await supabase.auth.updateUser({
+      password: parsedData.data.password,
+    });
 
     if (error) {
       return {
